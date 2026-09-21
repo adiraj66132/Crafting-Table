@@ -1,294 +1,73 @@
-# ⛏️ Minecraft Recipe Book
+# ⛏️ Minecraft Crafting Table
 
-A modern, searchable web-based recipe book for **Minecraft**.
-
-Browse Minecraft crafting recipes, search for items, filter recipes by category, and quickly see the ingredients and crafting pattern needed to create an item.
+A fast, searchable web recipe book for **Minecraft** (Java Edition data, 1.20 – 26.1).
+Browse 1,684 crafting recipes, preview them on an interactive 3×3 workstation, and copy genuine `/give` commands.
 
 ## ✨ Features
 
-* 📖 **Complete Recipe Book** — Browse Minecraft crafting recipes in one place.
-* 🔍 **Search** — Quickly find recipes by item name.
-* 🧱 **Crafting Recipes** — View crafting grids and required ingredients.
-* 🗂️ **Categories** — Filter recipes by categories such as:
-
-  * Building
-  * Tools
-  * Weapons
-  * Armor
-  * Food
-  * Redstone
-  * Transportation
-  * Decoration
-  * Utility
-  * Miscellaneous
-* 📱 **Responsive Design** — Works on desktop, tablet, and mobile.
-* 🌙 **Dark Minecraft-Inspired UI** — A familiar visual style for Minecraft players.
-* ⚡ **Fast & Lightweight** — Designed for quick browsing and searching.
-* 🔗 **Shareable Recipes** — Recipes can be linked directly so users can share them.
-* 📋 **Ingredient Details** — See exactly what materials are required.
-* 🧭 **Easy Navigation** — Quickly move between categories and recipes.
-
-## 🎮 Example
-
-A recipe page can show something like:
-
-```text
-Diamond Pickaxe
-
-⬜ 💎 💎
-⬜ 🪵 ⬜
-⬜ 🪵 ⬜
-
-Ingredients:
-💎 Diamond × 3
-🪵 Stick × 2
-
-Category:
-Tools
-```
+* 🔍 **Instant search** — debounced, matches names, ingredients, categories (press `/` to focus)
+* 🗂️ **Category filters** — All, Tools, Combat & Armor, Redstone, Building, Food, Utility, Decoration, plus newest-drop grouping
+* 🗿 **Era filters** — Wooden, Stone, Copper, Iron, Golden, Diamond, Netherite Ages; combines with every other filter
+* 🧱 **Interactive 3×3 workstation** — click any ingredient to jump to its recipe; variant switcher for multi-pattern items
+* ▶️ **Craft simulation** — step-by-step slot reveal with sound
+* ⌨️ **`/give` commands** — one click copies the genuine command (with output count); hover previews it
+* ⭐ **Favorites** — persisted in localStorage
+* 🔔 **Advancement-style toasts** with sounds (Web Audio synth, zero audio files)
+* 🏷️ **Version filter + sorting** (A–Z / Z–A / yield), result cap with "Show more" for smooth scrolling
+* 🖼️ **Item sprites** with tiered CDN fallback and pixel-crisp rendering
+* 📱 Responsive, keyboard-accessible, dark Minecraft-inspired UI in the Mojangles typeface
 
 ## 🛠️ Tech Stack
 
-> Update this section to match your actual project.
-
-* **Frontend:** HTML / CSS / JavaScript
-* **Framework:** React / Next.js / Vue / etc.
-* **Styling:** Tailwind CSS / CSS Modules / Custom CSS
-* **Data:** JSON / API / Database
-* **Hosting:** Vercel / Netlify / GitHub Pages
+* React 19 + TypeScript + Vite 6
+* Tailwind CSS v4
+* `lucide-react` icons
+* Zero runtime audio/image assets — sounds synthesized, sprites hotlinked with local fallback
 
 ## 📁 Project Structure
 
-Example structure:
-
 ```text
-minecraft-recipe-book/
+├── index.html
 ├── public/
-│   ├── images/
-│   └── icons/
-│
+│   ├── favicon.png            # Crafting Table icon (ChrisL21, CC BY-NC-ND 4.0)
+│   └── fonts/                 # Self-hosted Mojangles v2 (OFL 1.1, see OFL.txt)
+├── scripts/
+│   └── generate_data.js       # Fetches minecraft-data (26.1) → regenerates src/data
 ├── src/
-│   ├── components/
-│   ├── pages/
-│   ├── data/
-│   │   └── recipes.json
-│   ├── styles/
-│   └── utils/
-│
-├── README.md
-├── package.json
-└── LICENSE
+│   ├── App.tsx                # Search, filters, catalog
+│   ├── components/            # CraftingGrid, RecipeCard, ItemSprite, ToastSystem, …
+│   ├── data/                  # Generated: recipes.ts, materials.ts (do not edit by hand)
+│   └── utils/                 # assetUrl (tiered sprite CDN), audio (synth)
 ```
 
 ## 🚀 Getting Started
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-```
-
-### 2. Enter the project directory
-
-```bash
-cd minecraft-recipe-book
-```
-
-### 3. Install dependencies
-
 ```bash
 npm install
+npm run dev      # http://localhost:3000
+npm run lint     # tsc --noEmit
+npm run build
 ```
 
-### 4. Start the development server
+### Refreshing recipe data
 
 ```bash
-npm run dev
+node scripts/generate_data.js
 ```
 
-The website should now be available at:
+Pulls items + crafting recipes for `MC_VERSION` from PrismarineJS/minecraft-data and rewrites `src/data/`. Header counts, version options, and era counts derive from the data automatically.
 
-```text
-http://localhost:3000
-```
+## 🙏 Credits
 
-## 📚 Recipe Data
-
-Recipes should be stored in a structured format so they can easily be searched, filtered, and displayed.
-
-Example:
-
-```json
-{
-  "id": "diamond-pickaxe",
-  "name": "Diamond Pickaxe",
-  "category": "Tools",
-  "ingredients": [
-    {
-      "item": "Diamond",
-      "count": 3
-    },
-    {
-      "item": "Stick",
-      "count": 2
-    }
-  ],
-  "pattern": [
-    ["Diamond", "Diamond", "Diamond"],
-    ["", "Stick", ""],
-    ["", "Stick", ""]
-  ]
-}
-```
-
-## 🔎 Search & Filtering
-
-The recipe book should allow users to:
-
-* Search by item name
-* Search by ingredient
-* Filter by category
-* Sort recipes
-* Open a specific recipe
-* Navigate between related recipes
-
-Example:
-
-```text
-Search: diamond
-
-Results:
-├── Diamond Sword
-├── Diamond Pickaxe
-├── Diamond Axe
-├── Diamond Shovel
-├── Diamond Hoe
-└── Diamond Helmet
-```
-
-## 🧩 Recipe Types
-
-The website can eventually support different Minecraft recipe systems, including:
-
-* Crafting Table
-* 2×2 Inventory Crafting
-* Furnace
-* Blast Furnace
-* Smoker
-* Stonecutter
-* Smithing Table
-* Campfire
-* Brewing
-* Other applicable recipe types
-
-## 🌐 Minecraft Versions
-
-Recipe data can change between Minecraft versions.
-
-The project should ideally support version-specific recipe data:
-
-```text
-Minecraft Version
-├── 1.20
-├── 1.20.1
-├── 1.20.4
-├── 1.21
-└── Latest
-```
-
-When adding recipes, make sure the recipe is associated with the correct Minecraft version.
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-### Contribution workflow
-
-1. Fork the repository.
-2. Create a new branch.
-
-```bash
-git checkout -b feature/new-recipe
-```
-
-3. Make your changes.
-4. Test the website.
-5. Commit your changes.
-
-```bash
-git commit -m "Add new Minecraft recipes"
-```
-
-6. Push your branch.
-
-```bash
-git push origin feature/new-recipe
-```
-
-7. Open a Pull Request.
-
-### When adding recipes
-
-Please make sure:
-
-* Recipe names are correct.
-* Ingredients are accurate.
-* Crafting patterns are correct.
-* The Minecraft version is specified when necessary.
-* Images/icons use the correct item.
-* JSON/data follows the existing project format.
-
-## 🐛 Bug Reports
-
-Found an incorrect recipe or something broken?
-
-Please open an issue and include:
-
-* The recipe/item name
-* Minecraft version
-* What is incorrect
-* What the correct information should be
-* Screenshots, if useful
-
-## 💡 Feature Requests
-
-Have an idea?
-
-Some possible future features:
-
-* ⭐ Favorite recipes
-* 📌 Recently viewed recipes
-* 🔗 Shareable recipe URLs
-* 🌐 Multiple languages
-* 📱 Progressive Web App (PWA)
-* 🧮 Crafting calculator
-* 📦 "What can I craft?" mode
-* 🛒 Shopping/material checklist
-* 🧱 Recipe dependency trees
-* 🎨 Minecraft-style animations
-* 🔄 Minecraft version selector
-* 📴 Offline recipe browsing
+* Item textures: [TinyTank800/MinecraftAllImages](https://github.com/TinyTank800/MinecraftAllImages)
+* Favicon: Crafting Table icon by ChrisL21 (Chris) via Icon-Icons.com (CC BY-NC-ND 4.0)
+* Font: Mojangles v2 by PhuWorks (SIL OFL 1.1)
+* Recipe data: [PrismarineJS/minecraft-data](https://github.com/PrismarineJS/minecraft-data)
 
 ## ⚖️ Disclaimer
 
-Minecraft is a trademark of **Mojang Studios**.
-
-This project is an independent fan-made project and is **not affiliated with, endorsed by, or sponsored by Mojang Studios or Microsoft**.
-
-Minecraft-related names, assets, and trademarks belong to their respective owners.
+Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.
 
 ## 📄 License
 
-This project is licensed under the **MIT License** unless stated otherwise.
-
-See [`LICENSE`](LICENSE) for more information.
-
----
-
-## ❤️ Made for Minecraft Players
-
-A simple goal:
-
-> **Find any Minecraft recipe. Understand how to craft it. Get back to the game.**
-
-Happy crafting! ⛏️
+No `LICENSE` file in the repo yet — add one (MIT suggested); third-party assets follow their own licenses above regardless.

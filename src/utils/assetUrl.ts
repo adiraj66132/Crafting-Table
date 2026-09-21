@@ -3,12 +3,17 @@
  * for vanilla Minecraft items and blocks.
  */
 
-export function getItemImageUrl(itemId: string): string {
-  const cleanId = itemId.replace(/^minecraft:/, '').toLowerCase();
-  return `https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images-v2/1.21.1/${cleanId}.png`;
-}
+// ponytail: newest-first tier list; bump/append when the texture repo publishes a newer folder.
+// Full chain covers all but exotic NBT-variant items (e.g. suspicious_stew), which get the badge.
+const BASES = [
+  'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images-v2/26.2',
+  'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images-v2/1.21.1',
+  'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images/1.20.6',
+];
 
-export function getFallbackImageUrl(itemId: string): string {
-  const cleanId = itemId.replace(/^minecraft:/, '').toLowerCase();
-  return `https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images/1.20.6/${cleanId}.png`;
+const clean = (itemId: string) => itemId.replace(/^minecraft:/, '').toLowerCase();
+
+export function getItemImageCandidates(itemId: string): string[] {
+  const c = clean(itemId);
+  return BASES.map((b) => `${b}/${c}.png`);
 }

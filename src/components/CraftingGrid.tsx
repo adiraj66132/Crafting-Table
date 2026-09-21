@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Recipe } from '../types';
 import { ItemSprite } from './ItemSprite';
 import { itemsMap } from '../data/materials';
 import { sound } from '../utils/audio';
+import { showToast } from './ToastSystem';
 import { ArrowRight, Play, CheckCircle2, Copy, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CraftingGridProps {
@@ -22,16 +23,22 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
 }) => {
   const [activeStep, setActiveStep] = useState<number>(-1);
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
+  const timers = useRef<number[]>([]);
 
   useEffect(() => {
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
     setActiveStep(-1);
     setIsSimulating(false);
+    return () => {
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
+    };
   }, [recipe.id]);
 
   const handleSimulateCraft = () => {
-    if (isSimulating || recipe.isCraftable === false) return;
+    if (isSimulating) return;
     setIsSimulating(true);
     setActiveStep(-1);
 
@@ -40,41 +47,71 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
       .filter((idx) => idx !== -1);
 
     filledIndices.forEach((slotIdx, step) => {
-      setTimeout(() => {
-        setActiveStep(slotIdx);
-        sound.playWoodClick();
-      }, (step + 1) * 200);
+      timers.current.push(
+        window.setTimeout(() => {
+          setActiveStep(slotIdx);
+          sound.playWoodClick();
+        }, (step + 1) * 200)
+      );
     });
 
-    setTimeout(() => {
-      setActiveStep(99);
-      sound.playCraftSuccess();
-      setTimeout(() => {
-        setIsSimulating(false);
-        setActiveStep(-1);
-      }, 1200);
-    }, (filledIndices.length + 1) * 200 + 200);
+    timers.current.push(
+      window.setTimeout(() => {
+        setActiveStep(99);
+        sound.playCraftSuccess();
+        timers.current.push(
+          window.setTimeout(() => {
+            setIsSimulating(false);
+            setActiveStep(-1);
+          }, 1200)
+        );
+      }, (filledIndices.length + 1) * 200 + 200)
+    );
   };
 
   const handleCopyGiveCommand = () => {
     const cmd = recipe.giveCommand || `/give @p minecraft:${recipe.output.item} ${recipe.output.count}`;
-    navigator.clipboard.writeText(cmd);
-    sound.playPop();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const done = () => {
+      sound.playPop();
+      setCopied(true);
+      timers.current.push(window.setTimeout(() => setCopied(false), 2000));
+    };
+    const failed = () => {
+      showToast({ title: 'Copy Failed', description: 'Clipboard blocked — copy the command manually', type: 'warning' });
+    };
+    // ponytail: Clipboard API throws sync where undefined + rejects off HTTPS; legacy fallback, toast instead of silent fail
+    try {
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(cmd).then(done, failed);
+        return;
+      }
+      const ta = document.createElement('textarea');
+      ta.value = cmd;
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) done();
+      else failed();
+    } catch {
+      failed();
+    }
   };
 
-  const ingredientCounts: Record<string, { name: string; count: number }> = {};
-  recipe.grid.forEach((item) => {
-    if (item) {
-      if (!ingredientCounts[item]) {
-        const mat = itemsMap[item];
-        const displayName = mat ? mat.name : item.replace(/^minecraft:/, '').replace(/_/g, ' ');
-        ingredientCounts[item] = { name: displayName, count: 0 };
+  const ingredientCounts = useMemo<Record<string, { name: string; count: number }>>(() => {
+    const counts: Record<string, { name: string; count: number }> = {};
+    recipe.grid.forEach((item) => {
+      if (item) {
+        if (!counts[item]) {
+          const mat = itemsMap[item];
+          const displayName = mat ? mat.name : item.replace(/^minecraft:/, '').replace(/_/g, ' ');
+          counts[item] = { name: displayName, count: 0 };
+        }
+        counts[item].count += 1;
       }
-      ingredientCounts[item].count += 1;
-    }
-  });
+    });
+    return counts;
+  }, [recipe]);
 
   return (
     <div className="flex flex-col items-center w-full max-w-2xl mx-auto">
@@ -121,10 +158,8 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         {/* 3x3 Grid Matrix */}
         <div className="grid grid-cols-3 gap-2 p-3 bg-[#111412] rounded-xs border-2 border-[#2b332d] shadow-[inset_2px_2px_8px_rgba(0,0,0,0.9)] shrink-0">
           {recipe.grid.map((materialId, idx) => {
-            const isVisible =
-              !isSimulating ||
-              activeStep === 99 ||
-              (activeStep >= 0 && recipe.grid.slice(0, activeStep + 1).includes(materialId));
+            // ponytail: index compare reveals in slot order; duplicates reveal on their own turn
+            const isVisible = !isSimulating || activeStep === 99 || idx <= activeStep;
             const isHighlighted = isSimulating && activeStep === idx;
             const matInfo = materialId ? itemsMap[materialId] : null;
             const displayName = matInfo ? matInfo.name : (materialId || '').replace(/^minecraft:/, '').replace(/_/g, ' ');
@@ -132,15 +167,23 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             return (
               <div
                 key={idx}
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
+                role={materialId && onSelectIngredient ? 'button' : undefined}
+                tabIndex={materialId && onSelectIngredient ? 0 : undefined}
+                aria-label={materialId ? `View recipe for ${displayName}` : undefined}
                 onClick={() => {
                   if (materialId && onSelectIngredient) {
                     sound.playPop();
                     onSelectIngredient(materialId);
                   }
                 }}
-                className={`minecraft-slot relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center transition-all ${
+                onKeyDown={(e) => {
+                  if ((e.key === 'Enter' || e.key === ' ') && materialId && onSelectIngredient) {
+                    e.preventDefault();
+                    sound.playPop();
+                    onSelectIngredient(materialId);
+                  }
+                }}
+                className={`minecraft-slot group relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center transition-all ${
                   isHighlighted ? 'minecraft-slot-active scale-105 border-[#55C64B]' : ''
                 } ${
                   materialId && onSelectIngredient
@@ -161,9 +204,9 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
                   </span>
                 )}
 
-                {/* Slot Hover Badge */}
-                {hoveredIndex === idx && materialId && (
-                  <div className="absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#0d100e] border border-[#55C64B] px-2.5 py-1 rounded-xs text-[11px] font-pixel text-[#FFFFFF] shadow-2xl pointer-events-none z-50 animate-fadeIn">
+                {/* Slot Hover Badge (CSS-only, no re-render) */}
+                {materialId && (
+                  <div className="hidden group-hover:block absolute -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap bg-[#0d100e] border border-[#55C64B] px-2.5 py-1 rounded-xs text-[11px] font-pixel text-[#FFFFFF] shadow-2xl pointer-events-none z-50">
                     <span className="text-[#55C64B]">Click to craft:</span> {displayName}
                   </div>
                 )}
@@ -222,34 +265,32 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
 
           {/* Quick Action Toolbar */}
           <div className="flex flex-wrap items-center gap-2 mt-4 w-full">
-            {recipe.isCraftable !== false && (
-              <button
-                type="button"
-                onClick={handleSimulateCraft}
-                disabled={isSimulating}
-                className={`btn-3d px-3.5 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer text-black ${
-                  isSimulating ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-              >
-                {isSimulating ? (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Crafting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Simulate 3D Craft</span>
-                  </>
-                )}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleSimulateCraft}
+              disabled={isSimulating}
+              className={`btn-3d px-3.5 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer text-black ${
+                isSimulating ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isSimulating ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Crafting...</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>Simulate 3D Craft</span>
+                </>
+              )}
+            </button>
 
             <button
               type="button"
               onClick={handleCopyGiveCommand}
               className="btn-3d-secondary px-3 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 text-[#FFFFFF] hover:text-[#55C64B] cursor-pointer"
-              title="Copy /give command to clipboard"
+              title={recipe.giveCommand || `/give @p minecraft:${recipe.output.item} ${recipe.output.count}`}
             >
               <Copy className="w-3.5 h-3.5 text-[#55C64B]" />
               <span>{copied ? 'Copied Command!' : '/give command'}</span>
@@ -266,7 +307,9 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         </span>
 
         <div className="flex flex-wrap items-center gap-2">
-          {Object.entries(ingredientCounts).map(([matId, { name, count }]) => (
+          {Object.keys(ingredientCounts).map((matId) => {
+            const { name, count } = ingredientCounts[matId];
+            return (
             <button
               key={matId}
               type="button"
@@ -277,7 +320,8 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
               <span>{name}</span>
               <span className="text-[#55C64B] font-bold">×{count}</span>
             </button>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

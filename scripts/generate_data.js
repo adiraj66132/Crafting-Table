@@ -2,6 +2,20 @@ import fs from 'fs';
 import path from 'path';
 import https from 'https';
 
+// ponytail: single source for game version + categories; everything downstream derives from these
+const MC_VERSION = '26.1';
+const CATEGORIES = [
+  { id: 'all', name: 'All Recipes' },
+  { id: 'trials', name: '1.20 / 1.21 / 26.x' },
+  { id: 'tools', name: 'Tools' },
+  { id: 'combat', name: 'Combat & Armor' },
+  { id: 'redstone', name: 'Redstone & Tech' },
+  { id: 'building', name: 'Building & Blocks' },
+  { id: 'food', name: 'Food & Farming' },
+  { id: 'utility', name: 'Utility & Stations' },
+  { id: 'decoration', name: 'Decoration' },
+];
+
 const fetchJson = (url) => {
   return new Promise((resolve, reject) => {
     https.get(url, (res) => {
@@ -56,6 +70,7 @@ function determineCategory(itemId, displayName) {
     id.includes('boots') ||
     id.includes('arrow') ||
     id.includes('trident') ||
+    id.includes('spear') ||
     id.includes('wolf_armor')
   ) {
     return 'combat';
@@ -179,6 +194,13 @@ function determineCategory(itemId, displayName) {
 
 function determineVersion(itemId) {
   const id = itemId.toLowerCase();
+  // ponytail: keyword heuristic, not exact — re-check when bumping MC_VERSION
+  if (
+    id.includes('spear') ||
+    (id.includes('copper') && /(sword|axe|pickaxe|shovel|hoe|helmet|chestplate|leggings|boots|nugget|chain|lantern|bars|trapdoor)/.test(id))
+  ) {
+    return '26.1';
+  }
   if (
     id.includes('mace') ||
     id.includes('crafter') ||
@@ -193,7 +215,7 @@ function determineVersion(itemId) {
     id.includes('chiseled_copper') ||
     id.includes('vault')
   ) {
-    return '1.21 / 26.2';
+    return '1.21';
   }
   if (
     id.includes('cherry') ||
@@ -250,10 +272,10 @@ function alignIngredientsToGrid(ingredients, itemById) {
 }
 
 async function main() {
-  console.log('Fetching official Minecraft 1.21.4 items & recipes data...');
+  console.log(`Fetching official Minecraft ${MC_VERSION} items & recipes data...`);
   const [items, recipesMap] = await Promise.all([
-    fetchJson('https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.21.4/items.json'),
-    fetchJson('https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.21.4/recipes.json'),
+    fetchJson(`https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/${MC_VERSION}/items.json`),
+    fetchJson(`https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/${MC_VERSION}/recipes.json`),
   ]);
 
   const itemById = {};
@@ -262,38 +284,20 @@ async function main() {
   const processedRecipes = [];
   const processedMaterials = {};
 
-  // Build materials map for all items
+  // Build materials map for all items (id + display name only — the only fields the UI reads)
   items.forEach((item) => {
-    const name = formatName(item.name);
-    const category = determineCategory(item.name, item.displayName);
-    let rarity = 'common';
-    if (item.name.includes('diamond') || item.name.includes('beacon') || item.name.includes('mace')) {
-      rarity = 'rare';
-    } else if (item.name.includes('netherite') || item.name.includes('heavy_core') || item.name.includes('star')) {
-      rarity = 'epic';
-    } else if (item.name.includes('gold') || item.name.includes('emerald') || item.name.includes('crafter')) {
-      rarity = 'uncommon';
-    }
-
     processedMaterials[item.name] = {
       id: item.name,
-      name: item.displayName || name,
-      category,
-      rarity,
-      stackSize: item.stackSize || 64,
-      description: `Official Minecraft item: ${item.displayName || name}. Used in crafting and building.`,
-      giveCommand: `/give @p minecraft:${item.name} 1`,
+      name: item.displayName || formatName(item.name),
     };
   });
 
   // Process recipes
-  let recipeCounter = 0;
   for (const [outputIdStr, recipeList] of Object.entries(recipesMap)) {
     const outputItem = itemById[outputIdStr];
     if (!outputItem) continue;
 
     recipeList.forEach((rawRecipe, idx) => {
-      recipeCounter++;
       let grid = [null, null, null, null, null, null, null, null, null];
       let shapeless = false;
 
@@ -328,11 +332,8 @@ async function main() {
           count: outputCount,
         },
         shapeless,
-        isCraftable: true,
-        note: shapeless ? 'Shapeless Crafting (Arrangement does not matter)' : '3×3 Shaped Crafting Recipe',
         description: `Crafts ${outputCount}x ${outputItem.displayName || formatName(outputItem.name)} using ${ingredientsList.join(', ')}.`,
         version,
-        tags: [category, version, shapeless ? 'shapeless' : 'shaped', outputItem.name],
         searchKeywords: [
           outputItem.name,
           outputItem.displayName ? outputItem.displayName.toLowerCase() : '',
@@ -348,8 +349,8 @@ async function main() {
 
   // Write materials.ts
   const materialsContent = `/**
- * Official Minecraft 1.20+ & 1.21.4 (26.2) Item Dataset
- * Auto-generated from official Minecraft game definitions.
+ * Official Minecraft ${MC_VERSION} Item Dataset
+ * Auto-generated from official Minecraft game definitions. Do not edit by hand — rerun scripts/generate_data.js.
  */
 
 import { ItemInfo } from '../types';
@@ -359,23 +360,14 @@ export const itemsMap: Record<string, ItemInfo> = ${JSON.stringify(processedMate
 
   // Write recipes.ts
   const recipesContent = `/**
- * Official Minecraft 1.20+ & 1.21.4 (26.2) 3x3 Crafting Recipe Database
+ * Official Minecraft ${MC_VERSION} 3x3 Crafting Recipe Database
  * Contains ${processedRecipes.length} recipes.
+ * Auto-generated — do not edit by hand, rerun scripts/generate_data.js.
  */
 
 import { Recipe, CategoryInfo } from '../types';
 
-export const categories: CategoryInfo[] = [
-  { id: 'all', name: 'All Recipes', icon: 'crafting_table', description: 'Complete database of all Minecraft craftable items' },
-  { id: 'trials', name: '1.20 / 1.21 / 26.2', icon: 'mace', description: 'Newest items from Tricky Trials (Mace, Crafter, Breeze, Tuff Bricks)' },
-  { id: 'tools', name: 'Tools', icon: 'diamond_pickaxe', description: 'Mining tools, shovels, axes, fishing rods, and utility gear' },
-  { id: 'combat', name: 'Combat & Armor', icon: 'diamond_sword', description: 'Swords, bows, shields, armor sets, and maces' },
-  { id: 'redstone', name: 'Redstone & Tech', icon: 'redstone', description: 'Pistons, comparators, target blocks, TNT, and crafter' },
-  { id: 'building', name: 'Building & Blocks', icon: 'oak_planks', description: 'Planks, stone bricks, copper blocks, and structural materials' },
-  { id: 'food', name: 'Food & Farming', icon: 'golden_apple', description: 'Consumables, stew, bread, pie, and crops' },
-  { id: 'utility', name: 'Utility & Stations', icon: 'furnace', description: 'Workstations, storage containers, anvils, and tables' },
-  { id: 'decoration', name: 'Decoration', icon: 'painting', description: 'Banners, glass, carpets, candles, and aesthetic blocks' },
-];
+export const categories: CategoryInfo[] = ${JSON.stringify(CATEGORIES, null, 2)};
 
 export const recipesData: Recipe[] = ${JSON.stringify(processedRecipes, null, 2)};
 `;

@@ -48,7 +48,9 @@ export const MinecraftBackground: React.FC = () => {
     }
 
     let t = 0;
+    let running = true;
     const render = () => {
+      if (!running) return;
       t += 0.01;
       ctx.clearRect(0, 0, width, height);
 
@@ -70,10 +72,24 @@ export const MinecraftBackground: React.FC = () => {
       animId = requestAnimationFrame(render);
     };
 
+    // ponytail: pause rAF when tab hidden; full observer if canvas scrolls offscreen often
+    const handleVisibility = () => {
+      if (document.hidden) {
+        running = false;
+        cancelAnimationFrame(animId);
+      } else if (!running) {
+        running = true;
+        render();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     render();
 
     return () => {
+      running = false;
       window.removeEventListener('resize', handleResize);
+      document.removeEventListener('visibilitychange', handleVisibility);
       cancelAnimationFrame(animId);
     };
   }, []);

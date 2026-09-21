@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { getItemImageUrl, getFallbackImageUrl } from '../utils/assetUrl';
+import React, { useMemo, useState } from 'react';
+import { getItemImageCandidates } from '../utils/assetUrl';
 
 interface ItemSpriteProps {
   id: string;
@@ -14,7 +14,13 @@ export const ItemSprite: React.FC<ItemSpriteProps> = ({
   size = 'md',
   className = '',
 }) => {
-  const [errorLevel, setErrorLevel] = useState<number>(0);
+  // Track load failures keyed by item id so that when this component instance is
+  // reused with a different `id` (e.g. swapping recipes in the same 3x3 grid
+  // slot or output slot), the new sprite retries its textures instead of keeping
+  // a stale fallback. Without the id guard, a previously failed sprite would
+  // force every subsequent item in that slot into the initials badge.
+  const [error, setError] = useState<{ id: string; level: number }>({ id, level: 0 });
+  const errorLevel = error.id === id ? error.level : 0;
 
   const cleanId = id.replace(/^minecraft:/, '').toLowerCase();
 
@@ -26,11 +32,10 @@ export const ItemSprite: React.FC<ItemSpriteProps> = ({
     hero: 'w-24 h-24 sm:w-28 sm:h-28',
   };
 
-  const primaryUrl = getItemImageUrl(cleanId);
-  const fallbackUrl = getFallbackImageUrl(cleanId);
+  const urls = useMemo(() => getItemImageCandidates(id), [id]);
 
-  // If primary and fallback fails, render high-contrast Minecraft block badge with initials
-  if (errorLevel >= 2) {
+  // If all tiers fail, render high-contrast Minecraft block badge with initials
+  if (errorLevel >= urls.length) {
     const initials = cleanId
       .split('_')
       .map((w) => w[0]?.toUpperCase() || '')
@@ -49,11 +54,14 @@ export const ItemSprite: React.FC<ItemSpriteProps> = ({
 
   return (
     <img
-      src={errorLevel === 0 ? primaryUrl : fallbackUrl}
+      src={urls[Math.min(errorLevel, urls.length - 1)]}
       alt={name || cleanId}
       title={name || cleanId}
       loading="lazy"
-      onError={() => setErrorLevel((prev) => prev + 1)}
+      decoding="async"
+      onError={() =>
+        setError((prev) => ({ id, level: (prev.id === id ? prev.level : 0) + 1 }))
+      }
       className={`${sizeClasses[size]} object-contain pixelated drop-shadow-md select-none pointer-events-none transition-transform duration-150 ${className}`}
     />
   );

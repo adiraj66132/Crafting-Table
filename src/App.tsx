@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, type ReactNode } from 'react';
 import { Recipe } from './types';
 import { recipesData, categories } from './data/recipes';
 import { CraftingGrid } from './components/CraftingGrid';
@@ -16,11 +16,61 @@ import {
   Compass,
   Boxes,
   Zap,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+
+// ponytail: labels/options derive from data; rerun scripts/generate_data.js to refresh (alphabetical order fits current labels)
+const VERSIONS = [...new Set(recipesData.map((r) => r.version))].sort();
+const VERSION_RANGE = VERSIONS.length > 1 ? `${VERSIONS[0]} – ${VERSIONS[VERSIONS.length - 1]}` : VERSIONS[0] ?? '';
+
+// ponytail: native scrollBy arrows for clipped chip rows; arrows always shown, no overflow tracking
+function ChipScroller({ label, children }: { label: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const nudge = (dir: number) => ref.current?.scrollBy({ left: dir * 240, behavior: 'smooth' });
+  const arrow =
+    'shrink-0 p-1.5 bg-[#19201b] border border-[#353e37] rounded-xs text-[#A8A8A8] hover:text-[#55C64B] hover:border-[#55C64B] transition-colors cursor-pointer';
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1">
+      <button type="button" aria-label={`Scroll ${label} left`} onClick={() => nudge(-1)} className={arrow}>
+        <ChevronLeft className="w-3.5 h-3.5" />
+      </button>
+      <div ref={ref} className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
+        {children}
+      </div>
+      <button type="button" aria-label={`Scroll ${label} right`} onClick={() => nudge(1)} className={arrow}>
+        <ChevronRight className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// ponytail: era = material-tier prefix on output id; non-tiered items only show under All (no mapping table)
+const TIERS = ['wooden', 'stone', 'copper', 'iron', 'golden', 'diamond', 'netherite'] as const;
+const tierOf = (itemId: string): string | null => {
+  for (const t of TIERS) if (itemId === t || itemId.startsWith(`${t}_`)) return t;
+  return null;
+};
+const ERA_OPTIONS = TIERS.map((t) => ({
+  id: t,
+  name: `${t[0].toUpperCase()}${t.slice(1)} Age`,
+  count: recipesData.filter((r) => tierOf(r.output.item) === t).length,
+}));
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(60);
+  // ponytail: 150ms debounce + 60-card cap; virtualize if catalog grows 10x
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setVisibleCount(60);
+    }, 150);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedEra, setSelectedEra] = useState('all');
   const [selectedVersion, setSelectedVersion] = useState('all');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   const [sortBy, setSortBy] = useState<'az' | 'za' | 'yield'>('az');
@@ -48,8 +98,8 @@ export default function App() {
     }
   });
 
-  // Toggle favorite recipe
-  const toggleFavorite = (recipeId: string) => {
+  // Toggle favorite recipe (stable ref so memoized RecipeCards skip re-renders)
+  const toggleFavorite = useCallback((recipeId: string) => {
     setFavorites((prev) => {
       const next = prev.includes(recipeId)
         ? prev.filter((id) => id !== recipeId)
@@ -61,7 +111,7 @@ export default function App() {
       }
       return next;
     });
-  };
+  }, []);
 
   // Keyboard shortcut '/' to focus search input
   useEffect(() => {
@@ -87,25 +137,41 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const outputIndex = useMemo(() => {
+    const m = new Map<string, Recipe[]>();
+    for (const r of recipesData) {
+      const arr = m.get(r.output.item);
+      if (arr) arr.push(r);
+      else m.set(r.output.item, [r]);
+    }
+    return m;
+  }, []);
+  const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
+
+  useEffect(() => {
+    setVisibleCount(60);
+  }, [selectedCategory, selectedVersion, showOnlyFavorites, sortBy, selectedEra]);
+
   // Compute all variants for the currently selected output item
   const allRecipeVariants = useMemo(() => {
     if (!selectedRecipe) return [];
-    return recipesData.filter((r) => r.output.item === selectedRecipe.output.item);
-  }, [selectedRecipe]);
+    return outputIndex.get(selectedRecipe.output.item) ?? [];
+  }, [selectedRecipe, outputIndex]);
 
   // Handle recipe selection & scroll to workstation
-  const handleSelectRecipe = (recipe: Recipe) => {
+  const handleSelectRecipe = useCallback((recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setCurrentVariantIndex(0);
     workstationRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
+  }, []);
 
   // Ingredient click navigation inside workstation
-  const handleSelectIngredient = (materialId: string) => {
+  const handleSelectIngredient = useCallback((materialId: string) => {
     const cleanId = materialId.replace(/^minecraft:/, '').toLowerCase();
-    const matchingRecipe = recipesData.find(
-      (r) => r.output.item === cleanId || r.output.item === materialId || r.id === cleanId
-    );
+    const matchingRecipe =
+      outputIndex.get(cleanId)?.[0] ??
+      outputIndex.get(materialId)?.[0] ??
+      recipesData.find((r) => r.id === cleanId);
     if (matchingRecipe) {
       handleSelectRecipe(matchingRecipe);
       showToast({
@@ -121,22 +187,17 @@ export default function App() {
         type: 'warning',
       });
     }
-  };
+  }, [handleSelectRecipe, outputIndex]);
 
   // Filtered & Sorted Recipes
   const filteredRecipes = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = debouncedQuery.trim().toLowerCase();
 
     return recipesData
       .filter((recipe) => {
-        // Version filter
-        if (selectedVersion !== 'all') {
-          if (selectedVersion === '1.21' && !recipe.version.includes('1.21') && !recipe.version.includes('26.2')) {
-            return false;
-          }
-          if (selectedVersion === '1.20' && !recipe.version.includes('1.20')) {
-            return false;
-          }
+        // Version filter (exact match against data-derived options)
+        if (selectedVersion !== 'all' && recipe.version !== selectedVersion) {
+          return false;
         }
 
         // Category filter
@@ -144,23 +205,19 @@ export default function App() {
           return false;
         }
 
-        // Favorites filter
-        if (showOnlyFavorites && !favorites.includes(recipe.id) && !favorites.includes(recipe.output.item)) {
+        // Era filter (tier prefix on output id)
+        if (selectedEra !== 'all' && tierOf(recipe.output.item) !== selectedEra) {
           return false;
         }
 
-        // Search Query filter
-        if (query) {
-          const nameMatch = recipe.name.toLowerCase().includes(query);
-          const itemMatch = recipe.output.item.toLowerCase().includes(query);
-          const catMatch = recipe.category.toLowerCase().includes(query);
-          const ingredientMatch = recipe.grid.some(
-            (mat) => mat && mat.toLowerCase().includes(query)
-          );
+        // Favorites filter
+        if (showOnlyFavorites && !favoritesSet.has(recipe.id) && !favoritesSet.has(recipe.output.item)) {
+          return false;
+        }
 
-          if (!nameMatch && !itemMatch && !catMatch && !ingredientMatch) {
-            return false;
-          }
+        // Search Query filter (searchKeywords already bundles name/item/category/ingredients)
+        if (query && !recipe.searchKeywords.some((k) => k.includes(query))) {
+          return false;
         }
 
         return true;
@@ -171,7 +228,12 @@ export default function App() {
         if (sortBy === 'yield') return b.output.count - a.output.count;
         return 0;
       });
-  }, [searchQuery, selectedCategory, selectedVersion, showOnlyFavorites, favorites, sortBy]);
+  }, [debouncedQuery, selectedCategory, selectedVersion, showOnlyFavorites, favoritesSet, sortBy, selectedEra]);
+
+  const visibleRecipes = useMemo(
+    () => filteredRecipes.slice(0, visibleCount),
+    [filteredRecipes, visibleCount]
+  );
 
   // Random Recipe Discovery
   const handleRandomRecipe = () => {
@@ -202,7 +264,7 @@ export default function App() {
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#1e2620] border border-[#55C64B]/40 rounded-xs mb-3">
             <Sparkles className="w-3.5 h-3.5 text-[#55C64B]" />
             <span className="font-pixel text-[11px] text-[#55C64B] tracking-wider uppercase font-bold">
-              Minecraft 1.20+ & 1.21.4 / 26.2 Recipe Database
+              Minecraft {VERSION_RANGE} Recipe Database
             </span>
           </div>
 
@@ -210,18 +272,18 @@ export default function App() {
             MINECRAFT CRAFTING TABLE
           </h1>
           <p className="text-xs sm:text-sm text-[#A8A8A8] mt-2 max-w-xl">
-            Search 1,500+ recipes and instantly preview 3×3 crafting grid patterns, ingredients, and <code className="text-[#55C64B]">/give</code> commands.
+            Search {recipesData.length.toLocaleString()} recipes and instantly preview 3×3 crafting grid patterns, ingredients, and <code className="text-[#55C64B]">/give</code> commands.
           </p>
 
           {/* Quick Metrics Pills */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs font-pixel">
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#19201b] border border-[#353e37] rounded-xs text-[#FFFFFF]">
               <Boxes className="w-3.5 h-3.5 text-[#55C64B]" />
-              <span>1,557 Recipes</span>
+              <span>{recipesData.length.toLocaleString()} Recipes</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#19201b] border border-[#353e37] rounded-xs text-[#FFFFFF]">
               <Compass className="w-3.5 h-3.5 text-[#55C64B]" />
-              <span>1.20 – 1.21.4 / 26.2</span>
+              <span>{VERSION_RANGE}</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#19201b] border border-[#353e37] rounded-xs text-[#FFFFFF]">
               <Zap className="w-3.5 h-3.5 text-[#55C64B]" />
@@ -300,8 +362,11 @@ export default function App() {
                 className="bg-[#141815] border-2 border-[#353e37] text-xs text-[#FFFFFF] rounded-xs px-3 py-2.5 focus:outline-none focus:border-[#55C64B] font-pixel"
               >
                 <option value="all">All Versions</option>
-                <option value="1.21">1.21 / 26.2 (Tricky Trials)</option>
-                <option value="1.20">1.20 (Trails & Tales)</option>
+                {VERSIONS.map((v) => (
+                  <option key={v} value={v}>
+                    {v}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -321,8 +386,8 @@ export default function App() {
           </div>
 
           {/* Category Chips & Favorites Toggle */}
-          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-[#353e37]">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs max-w-full scrollbar-none">
+          <div className="flex flex-col gap-2 pt-2 border-t border-[#353e37]">
+            <ChipScroller label="categories">
               {categories.map((cat) => {
                 const isActive = selectedCategory === cat.id;
                 return (
@@ -343,7 +408,34 @@ export default function App() {
                   </button>
                 );
               })}
-            </div>
+            </ChipScroller>
+
+            {/* Era Chips (progression tier, combines with category) */}
+            <div className="flex items-center gap-2">
+            <ChipScroller label="eras">
+              {[{ id: 'all', name: 'All Eras', count: recipesData.length }, ...ERA_OPTIONS].map((era) => {
+                const isActive = selectedEra === era.id;
+                return (
+                  <button
+                    key={era.id}
+                    type="button"
+                    onClick={() => {
+                      sound.playWoodClick();
+                      setSelectedEra(era.id);
+                    }}
+                    className={`px-3 py-1.5 rounded-xs font-pixel whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isActive
+                        ? 'btn-3d text-black font-bold'
+                        : 'btn-3d-secondary text-[#A8A8A8] hover:text-[#FFFFFF]'
+                    }`}
+                  >
+                    <span>
+                      {era.name} ({era.count})
+                    </span>
+                  </button>
+                );
+              })}
+            </ChipScroller>
 
             {/* Favorite Star Filter Button */}
             <button
@@ -352,7 +444,7 @@ export default function App() {
                 sound.playPop();
                 setShowOnlyFavorites(!showOnlyFavorites);
               }}
-              className={`px-3 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer border transition-colors ${
+              className={`shrink-0 px-3 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer border transition-colors ${
                 showOnlyFavorites
                   ? 'bg-[#55C64B] text-black border-[#7eed72] font-bold'
                   : 'bg-[#19201b] text-[#A8A8A8] hover:text-[#FFFFFF] border-[#353e37]'
@@ -361,6 +453,7 @@ export default function App() {
               <Star className={`w-3.5 h-3.5 ${showOnlyFavorites ? 'fill-current' : ''}`} />
               <span>Starred ({favorites.length})</span>
             </button>
+            </div>
           </div>
         </div>
 
@@ -369,7 +462,7 @@ export default function App() {
           <span>
             Showing <strong className="text-[#FFFFFF]">{filteredRecipes.length}</strong> craftable items
           </span>
-          {(searchQuery || selectedCategory !== 'all' || selectedVersion !== 'all' || showOnlyFavorites) && (
+          {(searchQuery || selectedCategory !== 'all' || selectedVersion !== 'all' || showOnlyFavorites || selectedEra !== 'all') && (
             <button
               type="button"
               onClick={() => {
@@ -377,6 +470,7 @@ export default function App() {
                 setSelectedCategory('all');
                 setSelectedVersion('all');
                 setShowOnlyFavorites(false);
+                setSelectedEra('all');
               }}
               className="flex items-center gap-1.5 text-[#55C64B] hover:text-[#6FE35D] font-pixel cursor-pointer"
             >
@@ -388,18 +482,31 @@ export default function App() {
 
         {/* Craftable Items Catalog Grid */}
         {filteredRecipes.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 pt-2">
-            {filteredRecipes.map((recipe) => (
-              <RecipeCard
-                key={recipe.id}
-                recipe={recipe}
-                isSelected={selectedRecipe?.output.item === recipe.output.item}
-                isFavorite={favorites.includes(recipe.id) || favorites.includes(recipe.output.item)}
-                onSelect={handleSelectRecipe}
-                onToggleFavorite={toggleFavorite}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-6 pt-2">
+              {visibleRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  isSelected={selectedRecipe?.output.item === recipe.output.item}
+                  isFavorite={favoritesSet.has(recipe.id) || favoritesSet.has(recipe.output.item)}
+                  onSelect={handleSelectRecipe}
+                  onToggleFavorite={toggleFavorite}
+                />
+              ))}
+            </div>
+            {visibleCount < filteredRecipes.length && (
+              <div className="flex justify-center pt-6">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((c) => c + 60)}
+                  className="btn-3d-secondary px-6 py-2.5 text-xs font-pixel rounded-xs text-[#FFFFFF] cursor-pointer"
+                >
+                  Show more ({filteredRecipes.length - visibleCount} left)
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           /* Empty State */
           <div className="py-20 text-center mc-rough-panel border-2 border-[#353e37] rounded-xs space-y-4">
@@ -417,6 +524,7 @@ export default function App() {
                 setSelectedCategory('all');
                 setSelectedVersion('all');
                 setShowOnlyFavorites(false);
+                setSelectedEra('all');
               }}
               className="btn-3d px-6 py-2.5 text-xs font-pixel rounded-xs text-black"
             >
@@ -429,7 +537,7 @@ export default function App() {
       {/* ================= HERO PAGE FOOTER ================= */}
       <footer className="relative z-10 max-w-6xl w-full mx-auto px-4 sm:px-8 pt-12 pb-6 text-center text-xs text-[#6e7d72] border-t border-[#252e27] mt-16">
         <p className="font-pixel text-[#A8A8A8]">
-          MINECRAFT CRAFTING TABLE WORKSTATION · VERSION 1.20 - 1.21.4 / 26.2
+          MINECRAFT CRAFTING TABLE WORKSTATION · VERSION {VERSION_RANGE}
         </p>
         <p className="text-[11px] mt-1">
           Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.

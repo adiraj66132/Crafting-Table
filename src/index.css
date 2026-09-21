@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Mojangles v2 by PhuWorks (FontStruct #2741299), SIL OFL 1.1 — see public/fonts/OFL.txt */
+@font-face {
+  font-family: 'Mojangles';
+  src: url('/fonts/mojangles-v2.woff2') format('woff2');
+  font-weight: 400 700;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --bg-dark: #0f1210;
@@ -24,7 +32,7 @@
 }
 
 .font-pixel {
-  font-family: 'Silkscreen', monospace, sans-serif;
+  font-family: 'Mojangles', monospace, sans-serif;
 }
 
 .font-heading {
@@ -113,23 +121,6 @@
   box-shadow: 0 6px 0px #0b0e0c, 0 14px 24px rgba(0, 0, 0, 0.75);
 }
 
-.voxel-card-3d {
-  background-color: #1c211e;
-  border: 2px solid #353d37;
-  border-top: 2px solid #424d45;
-  border-left: 2px solid #424d45;
-  border-right: 2px solid #141715;
-  border-bottom: 3px solid #101311;
-  box-shadow: 0 4px 0px #0b0e0c, 0 10px 20px rgba(0, 0, 0, 0.6);
-  transition: transform 0.12s ease, border-color 0.12s ease;
-}
-
-.voxel-card-3d:hover {
-  transform: translateY(-2px);
-  border-color: #55C64B;
-  border-top-color: #7eed72;
-}
-
 /* Minecraft Pixel Action Button */
 .btn-3d {
   background-color: #55C64B;
@@ -183,49 +174,29 @@
   box-shadow: 0 1px 0px #090c0a;
 }
 
-/* Hard-edged Minecraft panel in theme */
-.minecraft-panel {
-  background-color: #1c211e;
-  border: 2px solid #38423b;
-  border-top: 2px solid #4a574d;
-  border-left: 2px solid #4a574d;
-  border-right: 2px solid #141715;
-  border-bottom: 2px solid #141715;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.85);
+/* Toast/pop-in animation (used as `animate-fadeIn`; no Tailwind default exists) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* Minecraft Hotbar Shell */
-.minecraft-hotbar-shell {
-  background-color: #1c211e;
-  border-top: 3px solid #444f46;
-  border-left: 3px solid #444f46;
-  border-right: 3px solid #101412;
-  border-bottom: 4px solid #0c0f0d;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 4px 0px #0a0d0b;
+.animate-fadeIn {
+  animation: fadeIn 0.18s ease-out;
 }
 
-.minecraft-hotbar-slot {
-  background-color: #151916;
-  border-top: 2px solid #0b0e0c;
-  border-left: 2px solid #0b0e0c;
-  border-right: 2px solid #353e37;
-  border-bottom: 2px solid #353e37;
-  box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.6);
-  transition: all 0.12s ease;
+/* Hide scrollbars on horizontal chip rows (used as `scrollbar-none`; no Tailwind default exists) */
+.scrollbar-none {
+  scrollbar-width: none;
 }
 
-.minecraft-hotbar-slot:hover {
-  background-color: #202722;
-  border-color: #4b574e;
-}
-
-.minecraft-hotbar-selected {
-  background-color: #243322;
-  outline: 3px solid #FFFFFF;
-  outline-offset: -1px;
-  box-shadow: 0 0 16px rgba(111, 227, 93, 0.5), inset 2px 2px 0 rgba(255, 255, 255, 0.9), inset -2px -2px 0 rgba(0, 0, 0, 0.7);
-  transform: translateY(-2px) scale(1.04);
-  z-index: 25;
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scrollbars */

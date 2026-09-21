@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import { Recipe } from '../types';
 import { ItemSprite } from './ItemSprite';
 import { sound } from '../utils/audio';
@@ -12,18 +12,28 @@ interface RecipeCardProps {
   onToggleFavorite: (recipeId: string) => void;
 }
 
-export const RecipeCard: React.FC<RecipeCardProps> = ({
+export const RecipeCard = memo(function RecipeCard({
   recipe,
   isSelected = false,
   isFavorite,
   onSelect,
   onToggleFavorite,
-}) => {
+}: RecipeCardProps) {
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`View recipe for ${recipe.name}`}
       onClick={() => {
         sound.playWoodClick();
         onSelect(recipe);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          sound.playWoodClick();
+          onSelect(recipe);
+        }
       }}
       className={`minecraft-clean-card group relative flex flex-col items-center justify-between p-4 sm:p-5 rounded-xs cursor-pointer select-none transition-all ${
         isSelected
@@ -89,4 +99,4 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({
       </div>
     </div>
   );
-};
+});

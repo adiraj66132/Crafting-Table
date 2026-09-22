@@ -217,8 +217,8 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
 
         {/* Arrow Indicator */}
         <div className="flex flex-col items-center justify-center">
-          <div className="w-10 h-10 rounded-full bg-[#222a25] border-2 border-[#353e37] flex items-center justify-center text-[#55C64B] shadow-[0_3px_0_#0d100e]">
-            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+          <div className="minecraft-slot w-12 h-12 rounded-xs flex items-center justify-center text-[#55C64B] shadow-[0_3px_0_#0d100e]">
+            <ArrowRight className="w-6 h-6 stroke-[3] rotate-90 sm:rotate-0" />
           </div>
           <span className="font-pixel text-[10px] text-[#A8A8A8] mt-1.5 uppercase tracking-wider">
             Yields
@@ -229,7 +229,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         <div className="flex flex-col items-center sm:items-start text-center sm:text-left flex-1 min-w-0">
           <div className="flex items-center gap-4">
             <div
-              className={`minecraft-slot-output relative w-20 h-20 sm:w-24 sm:h-24 flex items-center justify-center rounded-xs transition-transform ${
+              className={`minecraft-slot-output relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center rounded-xs shrink-0 transition-transform ${
                 activeStep === 99
                   ? 'scale-110 shadow-[0_0_25px_rgba(85,198,75,0.7)] border-[#55C64B]'
                   : ''
@@ -264,12 +264,12 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
           </div>
 
           {/* Quick Action Toolbar */}
-          <div className="flex flex-wrap items-center gap-2 mt-4 w-full">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4 w-full">
             <button
               type="button"
               onClick={handleSimulateCraft}
               disabled={isSimulating}
-              className={`btn-3d px-3.5 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer text-black ${
+              className={`btn-3d w-full sm:w-auto justify-center px-3.5 py-2 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B] ${
                 isSimulating ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -289,7 +289,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             <button
               type="button"
               onClick={handleCopyGiveCommand}
-              className="btn-3d-secondary px-3 py-1.5 rounded-xs font-pixel text-xs flex items-center gap-1.5 text-[#FFFFFF] hover:text-[#55C64B] cursor-pointer"
+              className="btn-3d-secondary w-full sm:w-auto justify-center px-3 py-2 rounded-xs font-pixel text-xs flex items-center gap-1.5 text-[#FFFFFF] hover:text-[#55C64B] hover:border-[#55C64B] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B]"
               title={recipe.giveCommand || `/give @p minecraft:${recipe.output.item} ${recipe.output.count}`}
             >
               <Copy className="w-3.5 h-3.5 text-[#55C64B]" />
@@ -300,13 +300,13 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
       </div>
 
       {/* Ingredients Summary Strip */}
-      <div className="mt-3 w-full bg-[#141815] border border-[#353e37] rounded-sm p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-        <span className="font-pixel text-[#A8A8A8] flex items-center gap-1.5">
+      <div className="mt-3 w-full bg-[#141815] border border-[#353e37] rounded-sm px-3 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2.5 text-xs">
+        <span className="font-pixel text-[11px] uppercase tracking-wider text-[#A8A8A8] flex items-center gap-1.5 shrink-0">
           <span className="w-2 h-2 rounded-full bg-[#55C64B]" />
           Required Ingredients:
         </span>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5 sm:justify-end sm:ml-auto">
           {Object.keys(ingredientCounts).map((matId) => {
             const { name, count } = ingredientCounts[matId];
             return (
@@ -314,7 +314,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
               key={matId}
               type="button"
               onClick={() => onSelectIngredient && onSelectIngredient(matId)}
-              className="px-2.5 py-1 bg-[#1d241f] hover:bg-[#27322a] border border-[#353e37] hover:border-[#55C64B] rounded-xs font-mono text-xs text-[#FFFFFF] flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2 py-1 bg-[#1d241f] hover:bg-[#27322a] border border-[#353e37] hover:border-[#55C64B] hover:shadow-[0_0_8px_rgba(85,198,75,0.25)] rounded-xs font-mono text-xs text-[#FFFFFF] flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B]"
             >
               <ItemSprite id={matId} size="sm" />
               <span>{name}</span>

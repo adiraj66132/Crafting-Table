@@ -114,9 +114,9 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
   }, [recipe]);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl mx-auto">
+    <div className="flex flex-col items-center w-full max-w-4xl mx-auto space-y-4">
       {/* Recipe Header Info Banner */}
-      <div className="w-full flex items-center justify-between px-3 py-2 bg-[#171c19] border border-[#353e37] rounded-t-sm mb-[-2px] text-xs">
+      <div className="w-full flex flex-wrap items-center justify-between gap-2 px-3 py-2 bg-[#171c19] border border-[#353e37] rounded-sm text-xs">
         <div className="flex items-center gap-2">
           <span className="font-pixel text-[#55C64B] flex items-center gap-1 font-bold">
             <Sparkles className="w-3.5 h-3.5" />
@@ -153,8 +153,8 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         )}
       </div>
 
-      {/* Main 3x3 Grid & Output Workstation Card */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 bg-[#181d1a] p-6 sm:p-8 rounded-b-sm border-2 border-[#353e37] shadow-[0_8px_24px_rgba(0,0,0,0.8)] w-full">
+      {/* Main 3x3 Grid & Output Workstation Section */}
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 bg-[#181d1a] p-5 sm:p-6 rounded-sm border border-[#353e37] w-full min-w-0">
         {/* 3x3 Grid Matrix */}
         <div className="grid grid-cols-3 gap-2 p-3 bg-[#111412] rounded-xs border-2 border-[#2b332d] shadow-[inset_2px_2px_8px_rgba(0,0,0,0.9)] shrink-0">
           {recipe.grid.map((materialId, idx) => {
@@ -216,9 +216,9 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         </div>
 
         {/* Arrow Indicator */}
-        <div className="flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center justify-center shrink-0">
           <div className="minecraft-slot w-12 h-12 rounded-xs flex items-center justify-center text-[#55C64B] shadow-[0_3px_0_#0d100e]">
-            <ArrowRight className="w-6 h-6 stroke-[3] rotate-90 sm:rotate-0" />
+            <ArrowRight className="w-6 h-6 stroke-[3] rotate-90 lg:rotate-0" />
           </div>
           <span className="font-pixel text-[10px] text-[#A8A8A8] mt-1.5 uppercase tracking-wider">
             Yields
@@ -226,10 +226,10 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         </div>
 
         {/* Output Slot & Created Item Details */}
-        <div className="flex flex-col items-center sm:items-start text-center sm:text-left flex-1 min-w-0">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center lg:items-start text-center lg:text-left flex-1 min-w-0 w-full">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 w-full min-w-0">
             <div
-              className={`minecraft-slot-output relative w-28 h-28 sm:w-32 sm:h-32 flex items-center justify-center rounded-xs shrink-0 transition-transform ${
+              className={`minecraft-slot-output relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center rounded-xs shrink-0 transition-transform ${
                 activeStep === 99
                   ? 'scale-110 shadow-[0_0_25px_rgba(85,198,75,0.7)] border-[#55C64B]'
                   : ''
@@ -250,26 +250,26 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
               )}
             </div>
 
-            <div className="flex flex-col">
-              <h3 className="font-pixel font-bold text-lg sm:text-xl text-[#FFFFFF] leading-tight">
+            <div className="flex flex-col min-w-0 flex-1 text-center sm:text-left">
+              <h3 className="font-pixel font-bold text-lg sm:text-xl text-[#FFFFFF] leading-tight break-words">
                 {recipe.name}
               </h3>
-              <span className="text-xs text-[#A8A8A8] font-mono mt-0.5">
+              <span className="text-xs text-[#A8A8A8] font-mono mt-1 break-all">
                 ID: <code className="text-[#55C64B]">{recipe.output.item}</code>
               </span>
-              <span className="text-[11px] text-[#6e7d72] mt-1 line-clamp-2">
+              <span className="text-[11px] text-[#8e9d92] mt-1.5 line-clamp-3">
                 {recipe.description}
               </span>
             </div>
           </div>
 
           {/* Quick Action Toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-4 w-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mt-4 w-full">
             <button
               type="button"
               onClick={handleSimulateCraft}
               disabled={isSimulating}
-              className={`btn-3d w-full sm:w-auto justify-center px-3.5 py-2 rounded-xs font-pixel text-xs flex items-center gap-1.5 cursor-pointer text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B] ${
+              className={`btn-3d flex-1 justify-center px-4 py-2.5 rounded-xs font-pixel text-xs flex items-center gap-2 cursor-pointer text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B] ${
                 isSimulating ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -289,7 +289,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             <button
               type="button"
               onClick={handleCopyGiveCommand}
-              className="btn-3d-secondary w-full sm:w-auto justify-center px-3 py-2 rounded-xs font-pixel text-xs flex items-center gap-1.5 text-[#FFFFFF] hover:text-[#55C64B] hover:border-[#55C64B] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B]"
+              className="btn-3d-secondary flex-1 justify-center px-4 py-2.5 rounded-xs font-pixel text-xs flex items-center gap-2 text-[#FFFFFF] hover:text-[#55C64B] hover:border-[#55C64B] cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B]"
               title={recipe.giveCommand || `/give @p minecraft:${recipe.output.item} ${recipe.output.count}`}
             >
               <Copy className="w-3.5 h-3.5 text-[#55C64B]" />

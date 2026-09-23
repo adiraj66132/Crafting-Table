@@ -6,8 +6,14 @@
 // ponytail: newest-first tier list; bump/append when the texture repo publishes a newer folder.
 // Full chain covers all but exotic NBT-variant items (e.g. suspicious_stew), which get the badge.
 const BASES = [
+  'https://cdn.jsdelivr.net/gh/TinyTank800/MinecraftAllImages@main/public/images-v2/26.2',
+  'https://cdn.jsdelivr.net/gh/TinyTank800/MinecraftAllImages@main/public/images-v2/1.21.1',
+  'https://cdn.jsdelivr.net/gh/TinyTank800/MinecraftAllImages@main/public/images/1.21.4',
+  'https://cdn.jsdelivr.net/gh/TinyTank800/MinecraftAllImages@main/public/images/1.20.6',
+  'https://cdn.jsdelivr.net/gh/TinyTank800/MinecraftAllImages@main/public/images/1.19.4',
   'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images-v2/26.2',
   'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images-v2/1.21.1',
+  'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images/1.21.4',
   'https://raw.githubusercontent.com/TinyTank800/MinecraftAllImages/main/public/images/1.20.6',
 ];
 

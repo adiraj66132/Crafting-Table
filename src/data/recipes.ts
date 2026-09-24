@@ -1,6 +1,6 @@
 /**
  * Official Minecraft 26.1 3x3 Crafting Recipe Database
- * Contains 1684 recipes.
+ * Contains 1694 recipes.
  * Auto-generated — do not edit by hand, rerun scripts/generate_data.js.
  */
 
@@ -51966,5 +51966,335 @@ export const recipesData: Recipe[] = [
       "tools"
     ],
     "giveCommand": "/give @p minecraft:waxed_oxidized_copper_golem_statue 1"
+  },
+  {
+    "id": "netherite_sword",
+    "name": "Netherite Sword",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_sword",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_sword",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Sword from Diamond Sword using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_sword",
+      "netherite sword",
+      "diamond sword",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_sword 1"
+  },
+  {
+    "id": "netherite_shovel",
+    "name": "Netherite Shovel",
+    "category": "tools",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_shovel",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_shovel",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Shovel from Diamond Shovel using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_shovel",
+      "netherite shovel",
+      "diamond shovel",
+      "netherite",
+      "smithing",
+      "tools"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_shovel 1"
+  },
+  {
+    "id": "netherite_pickaxe",
+    "name": "Netherite Pickaxe",
+    "category": "tools",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_pickaxe",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_pickaxe",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Pickaxe from Diamond Pickaxe using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_pickaxe",
+      "netherite pickaxe",
+      "diamond pickaxe",
+      "netherite",
+      "smithing",
+      "tools"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_pickaxe 1"
+  },
+  {
+    "id": "netherite_axe",
+    "name": "Netherite Axe",
+    "category": "tools",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_axe",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_axe",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Axe from Diamond Axe using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_axe",
+      "netherite axe",
+      "diamond axe",
+      "netherite",
+      "smithing",
+      "tools"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_axe 1"
+  },
+  {
+    "id": "netherite_hoe",
+    "name": "Netherite Hoe",
+    "category": "tools",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_hoe",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_hoe",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Hoe from Diamond Hoe using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_hoe",
+      "netherite hoe",
+      "diamond hoe",
+      "netherite",
+      "smithing",
+      "tools"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_hoe 1"
+  },
+  {
+    "id": "netherite_helmet",
+    "name": "Netherite Helmet",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_helmet",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_helmet",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Helmet from Diamond Helmet using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_helmet",
+      "netherite helmet",
+      "diamond helmet",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_helmet 1"
+  },
+  {
+    "id": "netherite_chestplate",
+    "name": "Netherite Chestplate",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_chestplate",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_chestplate",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Chestplate from Diamond Chestplate using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_chestplate",
+      "netherite chestplate",
+      "diamond chestplate",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_chestplate 1"
+  },
+  {
+    "id": "netherite_leggings",
+    "name": "Netherite Leggings",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_leggings",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_leggings",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Leggings from Diamond Leggings using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_leggings",
+      "netherite leggings",
+      "diamond leggings",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_leggings 1"
+  },
+  {
+    "id": "netherite_boots",
+    "name": "Netherite Boots",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_boots",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_boots",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Boots from Diamond Boots using Netherite Upgrade and Netherite Ingot.",
+    "version": "1.20+ Vanilla",
+    "searchKeywords": [
+      "netherite_boots",
+      "netherite boots",
+      "diamond boots",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_boots 1"
+  },
+  {
+    "id": "netherite_spear",
+    "name": "Netherite Spear",
+    "category": "combat",
+    "grid": [
+      null,
+      null,
+      null,
+      "netherite_upgrade_smithing_template",
+      "diamond_spear",
+      "netherite_ingot",
+      null,
+      null,
+      null
+    ],
+    "output": {
+      "item": "netherite_spear",
+      "count": 1
+    },
+    "shapeless": false,
+    "station": "smithing",
+    "description": "Smiths 1x Netherite Spear from Diamond Spear using Netherite Upgrade and Netherite Ingot.",
+    "version": "26.1",
+    "searchKeywords": [
+      "netherite_spear",
+      "netherite spear",
+      "diamond spear",
+      "netherite",
+      "smithing",
+      "combat"
+    ],
+    "giveCommand": "/give @p minecraft:netherite_spear 1"
   }
 ];

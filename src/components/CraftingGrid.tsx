@@ -120,7 +120,11 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
         <div className="flex items-center gap-2">
           <span className="font-pixel text-[#55C64B] flex items-center gap-1 font-bold">
             <Sparkles className="w-3.5 h-3.5" />
-            {recipe.shapeless ? 'SHAPELESS CRAFTING' : '3×3 SHAPED CRAFTING'}
+            {recipe.station === 'smithing'
+              ? 'SMITHING TABLE'
+              : recipe.shapeless
+                ? 'SHAPELESS CRAFTING'
+                : '3×3 SHAPED CRAFTING'}
           </span>
           <span className="text-[10px] px-1.5 py-0.5 bg-[#252f28] text-[#A8A8A8] border border-[#353e37] rounded-xs font-mono">
             {recipe.version}

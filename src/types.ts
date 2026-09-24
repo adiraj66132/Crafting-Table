@@ -15,6 +15,7 @@ export interface Recipe {
   grid: (string | null)[]; // 9 slots, row-major
   output: RecipeOutput;
   shapeless: boolean;
+  station?: 'smithing';
   description: string;
   version: string;
   searchKeywords: string[];

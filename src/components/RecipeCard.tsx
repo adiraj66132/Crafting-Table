@@ -91,6 +91,11 @@ export const RecipeCard = memo(function RecipeCard({
           <span className="text-[10px] font-mono text-[#6e7d72] uppercase">
             {recipe.category}
           </span>
+          {recipe.station === 'smithing' && (
+            <span className="text-[10px] px-1 bg-[#252f28] border border-[#353e37] text-[#55C64B] font-mono uppercase">
+              smithing
+            </span>
+          )}
           <span className="text-[10px] text-[#414e44]">·</span>
           <span className="text-[10px] font-mono text-[#55C64B]">
             {recipe.version}

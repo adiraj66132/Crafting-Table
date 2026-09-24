@@ -6,6 +6,7 @@ import { RecipeCard } from './components/RecipeCard';
 import { MinecraftBackground } from './components/MinecraftBackground';
 import { ToastContainer, showToast } from './components/ToastSystem';
 import { sound } from './utils/audio';
+import { dedupeByOutput } from './utils/catalog';
 import {
   Search,
   Dices,
@@ -23,6 +24,9 @@ import {
 // ponytail: labels/options derive from data; rerun scripts/generate_data.js to refresh (alphabetical order fits current labels)
 const VERSIONS = [...new Set(recipesData.map((r) => r.version))].sort();
 const VERSION_RANGE = VERSIONS.length > 1 ? `${VERSIONS[0]} – ${VERSIONS[VERSIONS.length - 1]}` : VERSIONS[0] ?? '';
+
+// counts show catalog cards (unique outputs), not pattern variants
+const uniqueRecipes = dedupeByOutput(recipesData);
 
 // ponytail: native scrollBy arrows for clipped chip rows; arrows always shown, no overflow tracking
 function ChipScroller({ label, children }: { label: string; children: ReactNode }) {
@@ -54,7 +58,7 @@ const tierOf = (itemId: string): string | null => {
 const ERA_OPTIONS = TIERS.map((t) => ({
   id: t,
   name: `${t[0].toUpperCase()}${t.slice(1)} Age`,
-  count: recipesData.filter((r) => tierOf(r.output.item) === t).length,
+  count: uniqueRecipes.filter((r) => tierOf(r.output.item) === t).length,
 }));
 
 export default function App() {
@@ -193,7 +197,8 @@ export default function App() {
   const filteredRecipes = useMemo(() => {
     const query = debouncedQuery.trim().toLowerCase();
 
-    return recipesData
+    return dedupeByOutput(
+      recipesData
       .filter((recipe) => {
         // Version filter (exact match against data-derived options)
         if (selectedVersion !== 'all' && recipe.version !== selectedVersion) {
@@ -227,7 +232,8 @@ export default function App() {
         if (sortBy === 'za') return b.name.localeCompare(a.name);
         if (sortBy === 'yield') return b.output.count - a.output.count;
         return 0;
-      });
+      })
+    ); // one card per output item; other craft patterns reachable via workstation variants
   }, [debouncedQuery, selectedCategory, selectedVersion, showOnlyFavorites, favoritesSet, sortBy, selectedEra]);
 
   const visibleRecipes = useMemo(
@@ -272,14 +278,14 @@ export default function App() {
             MINECRAFT CRAFTING TABLE
           </h1>
           <p className="text-xs sm:text-sm text-[#A8A8A8] mt-2 max-w-xl">
-            Search {recipesData.length.toLocaleString()} recipes and instantly preview 3×3 crafting grid patterns, ingredients, and <code className="text-[#55C64B]">/give</code> commands.
+            Search {uniqueRecipes.length.toLocaleString()} recipes and instantly preview 3×3 crafting grid patterns, ingredients, and <code className="text-[#55C64B]">/give</code> commands.
           </p>
 
           {/* Quick Metrics Pills */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4 text-xs font-pixel">
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#19201b] border border-[#353e37] rounded-xs text-[#FFFFFF]">
               <Boxes className="w-3.5 h-3.5 text-[#55C64B]" />
-              <span>{recipesData.length.toLocaleString()} Recipes</span>
+              <span>{uniqueRecipes.length.toLocaleString()} Recipes</span>
             </div>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-[#19201b] border border-[#353e37] rounded-xs text-[#FFFFFF]">
               <Compass className="w-3.5 h-3.5 text-[#55C64B]" />
@@ -300,7 +306,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 bg-[#55C64B] rounded-xs animate-pulse" />
               <h2 className="font-pixel font-bold text-base sm:text-xl text-[#FFFFFF]">
-                3×3 CRAFTING WORKSTATION
+                {selectedRecipe?.station === 'smithing' ? 'SMITHING TABLE' : '3×3 CRAFTING WORKSTATION'}
               </h2>
             </div>
             <button
@@ -413,7 +419,7 @@ export default function App() {
             {/* Era Chips (progression tier, combines with category) */}
             <div className="flex items-center gap-2">
             <ChipScroller label="eras">
-              {[{ id: 'all', name: 'All Eras', count: recipesData.length }, ...ERA_OPTIONS].map((era) => {
+              {[{ id: 'all', name: 'All Eras', count: uniqueRecipes.length }, ...ERA_OPTIONS].map((era) => {
                 const isActive = selectedEra === era.id;
                 return (
                   <button

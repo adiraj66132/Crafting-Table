@@ -232,6 +232,49 @@ function determineVersion(itemId) {
   return '1.20+ Vanilla';
 }
 
+// Prismarine crafting data has no smithing-table recipes; synthesize netherite gear entries
+const SMITHING_GEAR = [
+  ['netherite_sword', 'diamond_sword', 'combat'],
+  ['netherite_shovel', 'diamond_shovel', 'tools'],
+  ['netherite_pickaxe', 'diamond_pickaxe', 'tools'],
+  ['netherite_axe', 'diamond_axe', 'tools'],
+  ['netherite_hoe', 'diamond_hoe', 'tools'],
+  ['netherite_helmet', 'diamond_helmet', 'combat'],
+  ['netherite_chestplate', 'diamond_chestplate', 'combat'],
+  ['netherite_leggings', 'diamond_leggings', 'combat'],
+  ['netherite_boots', 'diamond_boots', 'combat'],
+  ['netherite_spear', 'diamond_spear', 'combat'],
+];
+
+function buildSmithingRecipes(items) {
+  const itemByName = Object.fromEntries(items.map((i) => [i.name, i]));
+  return SMITHING_GEAR.flatMap(([outId, baseId, category]) => {
+    const out = itemByName[outId];
+    if (!out) return [];
+    const name = out.displayName || formatName(outId);
+    const baseName = itemByName[baseId]?.displayName || formatName(baseId);
+    const templateName =
+      itemByName.netherite_upgrade_smithing_template?.displayName || formatName('netherite_upgrade_smithing_template');
+    const ingotName = itemByName.netherite_ingot?.displayName || formatName('netherite_ingot');
+    return [
+      {
+        id: outId,
+        name,
+        category,
+        // center row = smithing slots: template | base | addition
+        grid: [null, null, null, 'netherite_upgrade_smithing_template', baseId, 'netherite_ingot', null, null, null],
+        output: { item: outId, count: 1 },
+        shapeless: false,
+        station: 'smithing',
+        description: `Smiths 1x ${name} from ${baseName} using ${templateName} and ${ingotName}.`,
+        version: determineVersion(outId),
+        searchKeywords: [outId, name.toLowerCase(), baseName.toLowerCase(), 'netherite', 'smithing', category],
+        giveCommand: `/give @p minecraft:${outId} 1`,
+      },
+    ];
+  });
+}
+
 function alignInShapeToGrid(inShape, itemById) {
   // 3x3 grid initialization with null
   const grid = [null, null, null, null, null, null, null, null, null];
@@ -346,6 +389,17 @@ async function main() {
   }
 
   console.log(`Generated ${processedRecipes.length} recipes across ${Object.keys(processedMaterials).length} items.`);
+
+  const existingIds = new Set(processedRecipes.map((r) => r.id));
+  const smithingRecipes = buildSmithingRecipes(items);
+  for (const r of smithingRecipes) {
+    if (!existingIds.has(r.id)) {
+      processedRecipes.push(r);
+      existingIds.add(r.id);
+    }
+  }
+  console.log(`Added ${smithingRecipes.length} smithing-table recipes.`);
+  if (smithingRecipes.length !== SMITHING_GEAR.length) throw new Error('missing smithing gear items in dataset');
 
   // Write materials.ts
   const materialsContent = `/**

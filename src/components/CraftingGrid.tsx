@@ -8,16 +8,16 @@ import { ArrowRight, Play, CheckCircle2, Copy, Sparkles, ChevronLeft, ChevronRig
 
 interface CraftingGridProps {
   recipe: Recipe;
-  allRecipeVariants?: Recipe[];
-  currentVariantIndex?: number;
-  onSelectVariant?: (index: number) => void;
-  onSelectIngredient?: (materialId: string) => void;
+  allRecipeVariants: Recipe[];
+  currentVariantIndex: number;
+  onSelectVariant: (index: number) => void;
+  onSelectIngredient: (materialId: string) => void;
 }
 
 export const CraftingGrid: React.FC<CraftingGridProps> = ({
   recipe,
-  allRecipeVariants = [recipe],
-  currentVariantIndex = 0,
+  allRecipeVariants,
+  currentVariantIndex,
   onSelectVariant,
   onSelectIngredient,
 }) => {
@@ -77,7 +77,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
       timers.current.push(window.setTimeout(() => setCopied(false), 2000));
     };
     const failed = () => {
-      showToast({ title: 'Copy Failed', description: 'Clipboard blocked — copy the command manually', type: 'warning' });
+      showToast({ title: 'Copy Failed', description: 'Clipboard blocked — copy the command manually' });
     };
     // ponytail: Clipboard API throws sync where undefined + rejects off HTTPS; legacy fallback, toast instead of silent fail
     try {
@@ -136,7 +136,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => onSelectVariant && onSelectVariant((currentVariantIndex - 1 + allRecipeVariants.length) % allRecipeVariants.length)}
+              onClick={() => onSelectVariant((currentVariantIndex - 1 + allRecipeVariants.length) % allRecipeVariants.length)}
               className="p-1 text-[#A8A8A8] hover:text-[#FFFFFF] bg-[#222a25] border border-[#353e37] rounded-xs cursor-pointer"
               title="Previous Recipe Pattern"
             >
@@ -147,7 +147,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             </span>
             <button
               type="button"
-              onClick={() => onSelectVariant && onSelectVariant((currentVariantIndex + 1) % allRecipeVariants.length)}
+              onClick={() => onSelectVariant((currentVariantIndex + 1) % allRecipeVariants.length)}
               className="p-1 text-[#A8A8A8] hover:text-[#FFFFFF] bg-[#222a25] border border-[#353e37] rounded-xs cursor-pointer"
               title="Next Recipe Pattern"
             >
@@ -171,17 +171,17 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             return (
               <div
                 key={idx}
-                role={materialId && onSelectIngredient ? 'button' : undefined}
-                tabIndex={materialId && onSelectIngredient ? 0 : undefined}
+                role={materialId ? 'button' : undefined}
+                tabIndex={materialId ? 0 : undefined}
                 aria-label={materialId ? `View recipe for ${displayName}` : undefined}
                 onClick={() => {
-                  if (materialId && onSelectIngredient) {
+                  if (materialId) {
                     sound.playPop();
                     onSelectIngredient(materialId);
                   }
                 }}
                 onKeyDown={(e) => {
-                  if ((e.key === 'Enter' || e.key === ' ') && materialId && onSelectIngredient) {
+                  if ((e.key === 'Enter' || e.key === ' ') && materialId) {
                     e.preventDefault();
                     sound.playPop();
                     onSelectIngredient(materialId);
@@ -190,7 +190,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
                 className={`minecraft-slot group relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center transition-all ${
                   isHighlighted ? 'minecraft-slot-active scale-105 border-[#55C64B]' : ''
                 } ${
-                  materialId && onSelectIngredient
+                  materialId
                     ? 'cursor-pointer hover:border-[#55C64B] hover:bg-[#1a241c]'
                     : ''
                 }`}
@@ -317,7 +317,7 @@ export const CraftingGrid: React.FC<CraftingGridProps> = ({
             <button
               key={matId}
               type="button"
-              onClick={() => onSelectIngredient && onSelectIngredient(matId)}
+              onClick={() => onSelectIngredient(matId)}
               className="px-2 py-1 bg-[#1d241f] hover:bg-[#27322a] border border-[#353e37] hover:border-[#55C64B] hover:shadow-[0_0_8px_rgba(85,198,75,0.25)] rounded-xs font-mono text-xs text-[#FFFFFF] flex items-center gap-1.5 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55C64B]"
             >
               <ItemSprite id={matId} size="sm" />

@@ -4,7 +4,7 @@ import { getItemImageCandidates } from '../utils/assetUrl';
 interface ItemSpriteProps {
   id: string;
   name?: string;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'hero';
+  size?: 'sm' | 'md' | 'lg' | 'hero';
   className?: string;
 }
 
@@ -28,7 +28,6 @@ export const ItemSprite: React.FC<ItemSpriteProps> = ({
     sm: 'w-6 h-6',
     md: 'w-9 h-9',
     lg: 'w-12 h-12',
-    xl: 'w-16 h-16',
     hero: 'w-24 h-24 sm:w-28 sm:h-28',
   };
 

@@ -81,11 +81,6 @@ class SoundEffects {
   public playCraftSuccess() {
     this.arp([440, 554.37, 659.25, 880], 0.07, 0.25, 'sine', 0.12);
   }
-
-  // Minecraft Level-Up / Advancement Fanfare
-  public playLevelUp() {
-    this.arp([523.25, 659.25, 783.99, 1046.5], 0.08, 0.35, 'triangle', 0.15);
-  }
 }
 
 export const sound = new SoundEffects();

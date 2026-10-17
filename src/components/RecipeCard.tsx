@@ -6,7 +6,7 @@ import { Star, CheckCircle } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
-  isSelected?: boolean;
+  isSelected: boolean;
   isFavorite: boolean;
   onSelect: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
@@ -14,7 +14,7 @@ interface RecipeCardProps {
 
 export const RecipeCard = memo(function RecipeCard({
   recipe,
-  isSelected = false,
+  isSelected,
   isFavorite,
   onSelect,
   onToggleFavorite,

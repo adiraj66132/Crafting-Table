@@ -4,23 +4,21 @@ import { sound } from '../utils/audio';
 
 export interface ToastMessage {
   id: string;
-  type?: 'advancement' | 'info' | 'success' | 'warning';
   title: string;
   description: string;
   itemId?: string;
-  duration?: number;
 }
 
 // Global emitter event for toasts
 type ToastListener = (toast: ToastMessage) => void;
 const listeners: ToastListener[] = [];
 let toastSeq = 0;
+const TOAST_MS = 3500;
 
 export const showToast = (toast: Omit<ToastMessage, 'id'>) => {
   const toastWithId: ToastMessage = {
     ...toast,
     id: `toast-${Date.now()}-${toastSeq++}`,
-    duration: toast.duration || 3500,
   };
   listeners.forEach((l) => l(toastWithId));
 };
@@ -34,16 +32,12 @@ export const ToastContainer: React.FC = () => {
     const handleAdd = (toast: ToastMessage) => {
       if (!mounted) return;
       setToasts((prev) => [...prev, toast]);
-      if (toast.type === 'advancement') {
-        sound.playLevelUp();
-      } else {
-        sound.playPop();
-      }
+      sound.playPop();
 
       timers.push(
         window.setTimeout(() => {
           if (mounted) setToasts((prev) => prev.filter((t) => t.id !== toast.id));
-        }, toast.duration || 3500)
+        }, TOAST_MS)
       );
     };
 

@@ -46,6 +46,7 @@ Browse 1,684 crafting recipes, preview them on an interactive 3×3 workstation, 
 npm install
 npm run dev      # http://localhost:3000
 npm run lint     # tsc --noEmit
+npm test         # dedupe/variant invariant check
 npm run build
 ```
 

@@ -28,6 +28,8 @@ const VERSION_RANGE = VERSIONS.length > 1 ? `${VERSIONS[0]} – ${VERSIONS[VERSI
 // counts show catalog cards (unique outputs), not pattern variants
 const uniqueRecipes = dedupeByOutput(recipesData);
 
+const DEFAULT_FAVORITES = ['mace', 'crafter', 'crafting_table', 'diamond_sword'];
+
 // ponytail: native scrollBy arrows for clipped chip rows; arrows always shown, no overflow tracking
 function ChipScroller({ label, children }: { label: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -65,12 +67,9 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [visibleCount, setVisibleCount] = useState(60);
-  // ponytail: 150ms debounce + 60-card cap; virtualize if catalog grows 10x
+  // ponytail: 150ms debounce; virtualize if catalog grows 10x
   useEffect(() => {
-    const t = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-      setVisibleCount(60);
-    }, 150);
+    const t = setTimeout(() => setDebouncedQuery(searchQuery), 150);
     return () => clearTimeout(t);
   }, [searchQuery]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -96,11 +95,19 @@ export default function App() {
   const [favorites, setFavorites] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('crafting_table_favorites');
-      return saved ? JSON.parse(saved) : ['mace', 'crafter', 'crafting_table', 'diamond_sword'];
+      return saved ? JSON.parse(saved) : DEFAULT_FAVORITES;
     } catch {
-      return ['mace', 'crafter', 'crafting_table', 'diamond_sword'];
+      return DEFAULT_FAVORITES;
     }
   });
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setSelectedVersion('all');
+    setShowOnlyFavorites(false);
+    setSelectedEra('all');
+  };
 
   // Toggle favorite recipe (stable ref so memoized RecipeCards skip re-renders)
   const toggleFavorite = useCallback((recipeId: string) => {
@@ -154,7 +161,7 @@ export default function App() {
 
   useEffect(() => {
     setVisibleCount(60);
-  }, [selectedCategory, selectedVersion, showOnlyFavorites, sortBy, selectedEra]);
+  }, [debouncedQuery, selectedCategory, selectedVersion, showOnlyFavorites, sortBy, selectedEra]);
 
   // Compute all variants for the currently selected output item
   const allRecipeVariants = useMemo(() => {
@@ -182,13 +189,11 @@ export default function App() {
         title: 'Ingredient Selected',
         description: `Now viewing recipe for ${matchingRecipe.name}`,
         itemId: matchingRecipe.output.item,
-        type: 'info',
       });
     } else {
       showToast({
         title: 'Raw Material',
         description: `${cleanId.replace(/_/g, ' ')} is a mined/found material`,
-        type: 'warning',
       });
     }
   }, [handleSelectRecipe, outputIndex]);
@@ -244,14 +249,12 @@ export default function App() {
   // Random Recipe Discovery
   const handleRandomRecipe = () => {
     sound.playPop();
-    const randIdx = Math.floor(Math.random() * recipesData.length);
-    const rand = recipesData[randIdx];
+    const rand = recipesData[Math.floor(Math.random() * recipesData.length)];
     handleSelectRecipe(rand);
     showToast({
       title: 'Random Recipe Loaded',
       description: rand.name,
       itemId: rand.output.item,
-      type: 'info',
     });
   };
 
@@ -471,13 +474,7 @@ export default function App() {
           {(searchQuery || selectedCategory !== 'all' || selectedVersion !== 'all' || showOnlyFavorites || selectedEra !== 'all') && (
             <button
               type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-                setSelectedVersion('all');
-                setShowOnlyFavorites(false);
-                setSelectedEra('all');
-              }}
+              onClick={resetFilters}
               className="flex items-center gap-1.5 text-[#55C64B] hover:text-[#6FE35D] font-pixel cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -525,13 +522,7 @@ export default function App() {
             </p>
             <button
               type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedCategory('all');
-                setSelectedVersion('all');
-                setShowOnlyFavorites(false);
-                setSelectedEra('all');
-              }}
+              onClick={resetFilters}
               className="btn-3d px-6 py-2.5 text-xs font-pixel rounded-xs text-black"
             >
               Reset Filters
